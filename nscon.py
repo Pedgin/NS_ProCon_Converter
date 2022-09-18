@@ -225,6 +225,8 @@ class Controller:
 
         self.stopCounter = False
         self.stopCommunicate = False
+        
+        self.startTicker()
 
         def Connect(self):
             buf: bytes = bytes(128)
