@@ -146,7 +146,7 @@ class Controller:
 
     def InputReport(self):
         if not self.stopInput:
-            self.write(0x30, self.count, self.getInputBuffer())
+            self.write(0x30, self.count, self.getInputBuffer() + self.getSensorBuffer())
 
     def getInputBuffer(self):
         left = (bitInput(self.Input.Button.Y, 0) | bitInput(self.Input.Button.X, 1) |
@@ -169,6 +169,10 @@ class Controller:
         leftStick = int.to_bytes((ly | lx), 3, 'little')
         rightStick = int.to_bytes((ry | rx), 3, 'little')
 
+        return struct.pack('B BBB 3s 3s B', 0x81, left, center, right,
+                           leftStick, rightStick, 0x00)
+
+    def getSensorBuffer(self):
         accelx = self.Input.Sensor.Accel.X
         accely = self.Input.Sensor.Accel.Y
         accelz = self.Input.Sensor.Accel.Z
@@ -184,8 +188,7 @@ class Controller:
                            for s in [accelx, accely, accelz, gyrox, gyroy, gyroz]])
         self.resetSensors()
 
-        return struct.pack('B BBB 3s 3s B 12s 12s 12s', 0x81, left, center, right,
-                           leftStick, rightStick, 0x00, sixaxis, sixaxis, sixaxis)
+        return sixaxis * 3
 
     def resetSensors(self):
         self.Input.Sensor.Accel.X = 0x8000
@@ -225,7 +228,7 @@ class Controller:
 
         self.stopCounter = False
         self.stopCommunicate = False
-        
+
         self.startTicker()
 
         def Connect(self):
