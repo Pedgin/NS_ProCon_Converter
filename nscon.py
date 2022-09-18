@@ -70,9 +70,9 @@ class Stick:
 
 @dataclass
 class Sensor_struct:
-    X: int = field(default=0x8000, init=False)
-    Y: int = field(default=0x8000, init=False)
-    Z: int = field(default=0x8000, init=False)
+    X: int = field(default=0, init=False)
+    Y: int = field(default=0, init=False)
+    Z: int = field(default=0, init=False)
     Sensitivity: float = field(default=1.0, init=False)
 
 
@@ -101,7 +101,6 @@ class Controller:
     LogLevel: int = 0
     executor: ThreadPoolExecutor = ThreadPoolExecutor()
     future: Future = None
-    applySens: List[str] = []
 
     def __init__(self, path) -> None:
         self.path = path
@@ -173,16 +172,13 @@ class Controller:
                            leftStick, rightStick, 0x00)
 
     def getSensorBuffer(self):
-        accelx = self.Input.Sensor.Accel.X
-        accely = self.Input.Sensor.Accel.Y
-        accelz = self.Input.Sensor.Accel.Z
+        accelx = self.Input.Sensor.Accel.X & 0xFFFF
+        accely = self.Input.Sensor.Accel.Y & 0xFFFF
+        accelz = self.Input.Sensor.Accel.Z & 0xFFFF
 
-        gyrox = int(self.Input.Sensor.Gyro.X /
-                    (self.Input.Sensor.Gyro.Sensitivity if 'gyrox' in self.applySens else 1))
-        gyroy = int(self.Input.Sensor.Gyro.Y /
-                    (self.Input.Sensor.Gyro.Sensitivity if 'gyroy' in self.applySens else 1))
-        gyroz = int(self.Input.Sensor.Gyro.Z /
-                    (self.Input.Sensor.Gyro.Sensitivity if 'gyroz' in self.applySens else 1))
+        gyrox = int(self.Input.Sensor.Gyro.X / self.Input.Sensor.Gyro.Sensitivity) & 0xFFFF
+        gyroy = int(self.Input.Sensor.Gyro.Y / self.Input.Sensor.Gyro.Sensitivity) & 0xFFFF
+        gyroz = int(self.Input.Sensor.Gyro.Z / self.Input.Sensor.Gyro.Sensitivity) & 0xFFFF
 
         sixaxis = b''.join([s.to_bytes(2, 'little')
                            for s in [accelx, accely, accelz, gyrox, gyroy, gyroz]])
@@ -191,12 +187,12 @@ class Controller:
         return sixaxis * 3
 
     def resetSensors(self):
-        self.Input.Sensor.Accel.X = 0x8000
-        self.Input.Sensor.Accel.Y = 0x8000
-        self.Input.Sensor.Accel.Z = 0x8000
-        self.Input.Sensor.Gyro.X  = 0x8000
-        self.Input.Sensor.Gyro.Y  = 0x8000
-        self.Input.Sensor.Gyro.Z  = 0x8000
+        self.Input.Sensor.Accel.X = 0x0000
+        self.Input.Sensor.Accel.Y = 0x0000
+        self.Input.Sensor.Accel.Z = 0x0000
+        self.Input.Sensor.Gyro.X  = 0x0000
+        self.Input.Sensor.Gyro.Y  = 0x0000
+        self.Input.Sensor.Gyro.Z  = 0x0000
 
     def uart(self, ack: bool, subCmd: int, data: bytes):
         ackbyte = 0x00
@@ -210,6 +206,8 @@ class Controller:
 
     def write(self, ack: int, cmd: int, buf: bytes):
         data = bytes([ack, cmd]) + buf + bytes(62 - len(buf))
+        if self.LogLevel > 4:
+            print('<<<', data)
         try:
             os.write(self.fp, data)
         except BlockingIOError:
@@ -218,6 +216,7 @@ class Controller:
             os._exit(1)
 
     def startConnect(self):
+        print('---- ProCon Connection Started. ----')
         if self.fp != None:
             return
 
@@ -237,6 +236,8 @@ class Controller:
             while (not self.stopCommunicate):
                 try:
                     buf = os.read(self.fp, 128)
+                    if self.LogLevel > 4:
+                                print('>>>', buf.hex())
                     if buf[0] == 0x80:
                         if buf[1] == 0x01:
                             self.write(0x81, buf[1], bytes(
@@ -244,6 +245,7 @@ class Controller:
                         elif buf[1] in [0x02, 0x03]:
                             self.write(0x81, buf[1], bytes(0))
                         elif buf[1] == 0x04:
+                            print('---- ProCon Input Report Started. ----')
                             self.stopInput = False
                         else:
                             print('>>>', buf.hex())
@@ -287,32 +289,32 @@ class Controller:
 def bitInput(input, offset: int) -> int:
     return 1 << offset if input else 0
 
-def set_controller_input(procon: ControllerInput, code: str, eventvalue: any):
-    value: int = int(eventvalue > 0)
+def set_controller_input(procon: ControllerInput, code: str, event_value: any):
+    onoff_value: int = int(event_value > 0)
 
-    if   code == 'BUTTON_A': procon.Button.A = value
-    elif code == 'BUTTON_B': procon.Button.B = value
-    elif code == 'BUTTON_X': procon.Button.X = value
-    elif code == 'BUTTON_Y': procon.Button.Y = value
-    elif code == 'BUTTON_R': procon.Button.R = value
-    elif code == 'BUTTON_ZR': procon.Button.ZR = value
-    elif code == 'BUTTON_L': procon.Button.L = value
-    elif code == 'BUTTON_ZL': procon.Button.ZL = value
-    elif code == 'BUTTON_HOME': procon.Button.Home = value
-    elif code == 'BUTTON_PLUS': procon.Button.Plus = value
-    elif code == 'BUTTON_MINUS': procon.Button.Minus = value
-    elif code == 'BUTTON_CAPTUER': procon.Button.Capture = value
-    elif code == 'DPAD_UP': procon.Dpad.Up = value
-    elif code == 'DPAD_DOWN': procon.Dpad.Down = value
-    elif code == 'DPAD_LEFT': procon.Dpad.Left = value
-    elif code == 'DPAD_RIGHT': procon.Dpad.Right = value
-    elif code == 'LSTICK_UP': procon.Stick.Left.Y = value
-    elif code == 'LSTICK_DOWN': procon.Stick.Left.Y = value
-    elif code == 'LSTICK_LEFT': procon.Stick.Left.X = value
-    elif code == 'LSTICK_RIGHT': procon.Stick.Left.X = value
-    elif code == 'LSTICK_PRESS': procon.Stick.Left.Press = value
-    elif code == 'RSTICK_UP': procon.Stick.Right.Y = value
-    elif code == 'RSTICK_DOWN': procon.Stick.Right.Y = value
-    elif code == 'RSTICK_LEFT': procon.Stick.Right.X = value
-    elif code == 'RSTICK_RIGHT': procon.Stick.Right.X = value
-    elif code == 'RSTICK_PRESS': procon.Stick.Right.Press = value
+    if   code == 'BUTTON_A': procon.Button.A = onoff_value
+    elif code == 'BUTTON_B': procon.Button.B = onoff_value
+    elif code == 'BUTTON_X': procon.Button.X = onoff_value
+    elif code == 'BUTTON_Y': procon.Button.Y = onoff_value
+    elif code == 'BUTTON_R': procon.Button.R = onoff_value
+    elif code == 'BUTTON_ZR': procon.Button.ZR = onoff_value
+    elif code == 'BUTTON_L': procon.Button.L = onoff_value
+    elif code == 'BUTTON_ZL': procon.Button.ZL = onoff_value
+    elif code == 'BUTTON_HOME': procon.Button.Home = onoff_value
+    elif code == 'BUTTON_PLUS': procon.Button.Plus = onoff_value
+    elif code == 'BUTTON_MINUS': procon.Button.Minus = onoff_value
+    elif code == 'BUTTON_CAPTUER': procon.Button.Capture = onoff_value
+    elif code == 'DPAD_UP': procon.Dpad.Up = onoff_value
+    elif code == 'DPAD_DOWN': procon.Dpad.Down = onoff_value
+    elif code == 'DPAD_LEFT': procon.Dpad.Left = onoff_value
+    elif code == 'DPAD_RIGHT': procon.Dpad.Right = onoff_value
+    elif code == 'LSTICK_UP': procon.Stick.Left.Y = event_value
+    elif code == 'LSTICK_DOWN': procon.Stick.Left.Y = event_value
+    elif code == 'LSTICK_LEFT': procon.Stick.Left.X = event_value
+    elif code == 'LSTICK_RIGHT': procon.Stick.Left.X = event_value
+    elif code == 'LSTICK_PRESS': procon.Stick.Left.Press = onoff_value
+    elif code == 'RSTICK_UP': procon.Stick.Right.Y = event_value
+    elif code == 'RSTICK_DOWN': procon.Stick.Right.Y = event_value
+    elif code == 'RSTICK_LEFT': procon.Stick.Right.X = event_value
+    elif code == 'RSTICK_RIGHT': procon.Stick.Right.X = event_value
+    elif code == 'RSTICK_PRESS': procon.Stick.Right.Press = onoff_value
