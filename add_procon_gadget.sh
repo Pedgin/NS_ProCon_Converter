@@ -16,6 +16,7 @@ REPORT_DESCRIPTOR="050115000904A1018530050105091901290A150025017501950A550065008
 DEVICE_NO="usb0"
 CONFIG_NO="1"
 MAX_POWER="500"
+ATTRIBUTES="0xa0"
 
 case "$1" in
     start)
@@ -53,6 +54,7 @@ case "$1" in
         mkdir -p configs/c.$CONFIG_NO/strings/0x409
         echo "Nintendo Switch Pro Controller" > configs/c.$CONFIG_NO/strings/0x409/configuration
         echo $MAX_POWER > configs/c.$CONFIG_NO/MaxPower
+        echo $ATTRIBUTES > configs/c.$CONFIG_NO/bmAttributes
 
         echo "Associating the functions with their configurations"
         ln -s functions/hid.$DEVICE_NO configs/c.$CONFIG_NO/
