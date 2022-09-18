@@ -48,20 +48,27 @@ else:
     raise FileNotFoundError(errno.ENOENT, os.strerror(
         errno.ENOENT), config_ini_path)
 
-print(f'Configured MousePath:[{devconfig["MousePath"]}]')
-print(f'Configured KeyboardPath:[{devconfig["KeyboardPath"]}]')
-print('Valid Device List')
 devices: List[InputDevice] = [InputDevice(
     path) for path in evdev.list_devices()]
-for device in devices:
-    print(f'\t{device.path} {device.name} {device.phys}')
 
-# TODO: Auto detect InputDevice
-try:
-    mouse: InputDevice = InputDevice(devconfig['MousePath'])
-    keybd: InputDevice = InputDevice(devconfig['KeyboardPath'])
-except:
+mouse = None
+keybd = None
+
+for dev in devices:
+    devcapa = dev.capabilities()
+    EV_REL = ev.ecodes['EV_REL']
+    EV_KEY = ev.ecodes['EV_KEY']
+    BTN_MOUSE = ev.ecodes['BTN_MOUSE']
+    if (EV_REL in devcapa) and (BTN_MOUSE in devcapa[EV_KEY]):
+        mouse = dev
+    elif (EV_REL not in devcapa) and (EV_KEY in devcapa):
+        keybd = dev
+
+if not mouse or not keybd:
     print('Input Device dose not exists. Please check valid device list.')
+    print('Valid Device List')
+    for device in devices:
+        print(f'\t{device.path} {device.name} {device.phys}')
     os._exit(1)
 
 evkeys: Dict[int, str] = {ev.ecodes[key.upper()]: key.upper()
