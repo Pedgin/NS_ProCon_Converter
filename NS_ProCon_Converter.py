@@ -78,9 +78,8 @@ evkeys: Dict[int, str] = {ev.ecodes[key.upper()]: key.upper()
                           for key in keyconfig}
 turn_dots: float = float(devconfig['MouseDPI']) * \
     (float(devconfig['MouseTurnDistance']) / 2.54)
-dot_per_degree: float = (turn_dots / 180) * 0.07
+dot_per_degree: float = (turn_dots / 180)
 ProCon.Input.Sensor.Gyro.Sensitivity = dot_per_degree
-ProCon.applySens = ['gyroy', 'gyroz']
 ProCon.LogLevel = 2
 
 # //////////////////////////////////////////////////////////////////////////////

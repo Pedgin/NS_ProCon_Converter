@@ -294,7 +294,7 @@ def bitInput(input, offset: int) -> int:
 def Dot2DPS(dot: int, dot_per_degree: float, psec: float) -> float:
     degree: float = dot / dot_per_degree
     dps:float = degree / psec
-    return dps
+    return dps / 0.07 # Convert dps digit
 
 def set_controller_input(procon: ControllerInput, code: str, event_value: any):
     onoff_value: int = int(event_value > 0)
