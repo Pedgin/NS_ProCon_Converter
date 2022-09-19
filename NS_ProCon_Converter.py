@@ -85,7 +85,7 @@ ProCon.LogLevel = 2
 # TODO: REL_WHEEL
 async def mouse_events(mouse: InputDevice):
     async for event in mouse.async_read_loop():
-        if event.type == ev.ecodes['EV_REL'] and event.code in ['REL_X', 'REL_Y']:
+        if event.type == ev.ecodes['EV_REL'] and event.code in [ev.ecodes['REL_X'], ev.ecodes['REL_Y']]:
             if event.code == 'REL_X':
                 ProCon.Input.Sensor.Gyro.Z += event.value
             elif event.code == 'REL_Y':
