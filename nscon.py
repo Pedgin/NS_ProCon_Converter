@@ -101,6 +101,7 @@ class Controller:
     LogLevel: int = 0
     executor: ThreadPoolExecutor = ThreadPoolExecutor()
     future: Future = None
+    ReportSec: int = 0.015
 
     def __init__(self, path) -> None:
         self.path = path
@@ -132,9 +133,9 @@ class Controller:
             nonlocal tick
             tick += 1
             self.Counter()
-            if tick % 6 == 0:
+            if tick % 3 == 0:
                 self.InputReport()
-                tick -= 6
+                tick -= 3
 
         signal.signal(signal.SIGALRM, tickScheduler)
         signal.setitimer(signal.ITIMER_REAL, 0.005, 0.005)
@@ -176,9 +177,10 @@ class Controller:
         accely = self.Input.Sensor.Accel.Y & 0xFFFF
         accelz = self.Input.Sensor.Accel.Z & 0xFFFF
 
-        gyrox = int(Dot2DPS(self.Input.Sensor.Gyro.X, self.Input.Sensor.Gyro.Sensitivity, 0.03)) & 0xFFFF
-        gyroy = int(Dot2DPS(self.Input.Sensor.Gyro.Y, self.Input.Sensor.Gyro.Sensitivity, 0.03)) & 0xFFFF
-        gyroz = int(Dot2DPS(self.Input.Sensor.Gyro.Z, self.Input.Sensor.Gyro.Sensitivity, 0.03)) & 0xFFFF
+        dot_per_degree = self.Input.Sensor.Gyro.Sensitivity
+        gyrox = int(Dot2DPS(self.Input.Sensor.Gyro.X, dot_per_degree, self.ReportSec)) & 0xFFFF
+        gyroy = int(Dot2DPS(self.Input.Sensor.Gyro.Y, dot_per_degree, self.ReportSec)) & 0xFFFF
+        gyroz = int(Dot2DPS(self.Input.Sensor.Gyro.Z, dot_per_degree, self.ReportSec)) & 0xFFFF
 
         sixaxis: bytes = b''.join([s.to_bytes(2, 'little')
                            for s in [accelx, accely, accelz, gyrox, gyroy, gyroz]])
