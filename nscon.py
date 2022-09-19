@@ -197,7 +197,7 @@ class Controller:
         self.Input.Sensor.Gyro.Z  = 0x0000
 
     def uart(self, ack: bool, subCmd: int, data: bytes):
-        ackbyte = 0x00
+        ackByte = 0x00
         if ack:
             ackByte = 0x80
             if len(data):
