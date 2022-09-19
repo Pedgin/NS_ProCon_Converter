@@ -87,7 +87,7 @@ async def mouse_events(mouse: InputDevice):
     async for event in mouse.async_read_loop():
         if event.type == ev.ecodes['EV_REL'] and event.code in [ev.ecodes['REL_X'], ev.ecodes['REL_Y']]:
             if event.code == ev.ecodes['REL_X']:
-                ProCon.Input.Sensor.Gyro.Z += event.value
+                ProCon.Input.Sensor.Gyro.Z -= event.value
             elif event.code == ev.ecodes['REL_Y']:
                 ProCon.Input.Sensor.Gyro.Y += event.value
         elif event.type == ev.ecodes['EV_KEY'] and event.code in evkeys:
