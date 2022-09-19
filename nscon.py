@@ -178,9 +178,9 @@ class Controller:
         accelz = self.Input.Sensor.Accel.Z & 0xFFFF
 
         dot_per_degree = self.Input.Sensor.Gyro.Sensitivity
-        gyrox = int(Dot2DPS(self.Input.Sensor.Gyro.X, dot_per_degree, self.ReportSec)) & 0xFFFF
-        gyroy = int(Dot2DPS(self.Input.Sensor.Gyro.Y, dot_per_degree, self.ReportSec)) & 0xFFFF
-        gyroz = int(Dot2DPS(self.Input.Sensor.Gyro.Z, dot_per_degree, self.ReportSec)) & 0xFFFF
+        gyrox = Dot2DPS(self.Input.Sensor.Gyro.X, dot_per_degree, self.ReportSec) & 0xFFFF
+        gyroy = Dot2DPS(self.Input.Sensor.Gyro.Y, dot_per_degree, self.ReportSec) & 0xFFFF
+        gyroz = Dot2DPS(self.Input.Sensor.Gyro.Z, dot_per_degree, self.ReportSec) & 0xFFFF
 
         sixaxis: bytes = b''.join([s.to_bytes(2, 'little')
                            for s in [accelx, accely, accelz, gyrox, gyroy, gyroz]])
@@ -291,10 +291,14 @@ class Controller:
 def bitInput(input, offset: int) -> int:
     return 1 << offset if input else 0
 
-def Dot2DPS(dot: int, dot_per_degree: float, psec: float) -> float:
+def Dot2DPS(dot: int, dot_per_degree: float, psec: float) -> int:
     degree: float = dot / dot_per_degree
     dps:float = degree / psec
-    return dps / 0.07 # Convert dps digit
+    dps_digit: int = int(dps / 0.07)
+    if dps_digit > 32767: dps_digit = 32767
+    elif dps_digit < -32768: dps_digit = -32768
+    
+    return dps_digit
 
 def set_controller_input(procon: ControllerInput, code: str, event_value: any):
     onoff_value: int = int(event_value > 0)
