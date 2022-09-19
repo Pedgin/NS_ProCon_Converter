@@ -180,7 +180,7 @@ class Controller:
         gyroy = int(self.Input.Sensor.Gyro.Y / self.Input.Sensor.Gyro.Sensitivity) & 0xFFFF
         gyroz = int(self.Input.Sensor.Gyro.Z / self.Input.Sensor.Gyro.Sensitivity) & 0xFFFF
 
-        sixaxis = b''.join([s.to_bytes(2, 'little')
+        sixaxis: bytes = b''.join([s.to_bytes(2, 'little')
                            for s in [accelx, accely, accelz, gyrox, gyroy, gyroz]])
         self.resetSensors()
 
@@ -207,7 +207,7 @@ class Controller:
     def write(self, ack: int, cmd: int, buf: bytes):
         data = bytes([ack, cmd]) + buf + bytes(62 - len(buf))
         if self.LogLevel > 4:
-            print('<<<', data)
+            print('<<<', data.hex())
         try:
             os.write(self.fp, data)
         except BlockingIOError:
