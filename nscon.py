@@ -268,12 +268,12 @@ class Controller:
                                     True, buf[10], buf[11:16] + data[buf[11]:(buf[11]+buf[15])])
                                 if self.LogLevel > 1:
                                     print(
-                                        f"Read SPI address: {buf[12]:02x}{buf[11]:02x}[{buf[15]}] {data[buf[11]:buf[11]+buf[15]]}\n")
+                                        f"Read SPI address: {buf[12]:02x}{buf[11]:02x}[{buf[15]}] {data[buf[11]:buf[11]+buf[15]]}")
                             else:
                                 self.uart(False, buf[10], bytes(0))
                                 if self.LogLevel > 1:
                                     print(
-                                        f"Unknown SPI address: {buf[12]:02x}[{buf[15]}]\n")
+                                        f"Unknown SPI address: {buf[12]:02x}[{buf[15]}]")
                         elif buf[10] == 0x21:
                             self.uart(True, buf[10], bytes(
                                 [0x01, 0x00, 0xff, 0x00, 0x03, 0x00, 0x05, 0x01]))
