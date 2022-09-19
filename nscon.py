@@ -147,7 +147,7 @@ class Controller:
         if not self.stopInput:
             self.write(0x30, self.count, self.getInputBuffer() + self.getSensorBuffer())
 
-    def getInputBuffer(self):
+    def getInputBuffer(self) -> bytes:
         left = (bitInput(self.Input.Button.Y, 0) | bitInput(self.Input.Button.X, 1) |
                 bitInput(self.Input.Button.B, 2) | bitInput(self.Input.Button.A, 3) |
                 bitInput(self.Input.Button.R, 6) | bitInput(self.Input.Button.ZR, 7))
@@ -171,14 +171,14 @@ class Controller:
         return struct.pack('B BBB 3s 3s B', 0x81, left, center, right,
                            leftStick, rightStick, 0x00)
 
-    def getSensorBuffer(self):
+    def getSensorBuffer(self) -> bytes:
         accelx = self.Input.Sensor.Accel.X & 0xFFFF
         accely = self.Input.Sensor.Accel.Y & 0xFFFF
         accelz = self.Input.Sensor.Accel.Z & 0xFFFF
 
-        gyrox = int(self.Input.Sensor.Gyro.X / self.Input.Sensor.Gyro.Sensitivity) & 0xFFFF
-        gyroy = int(self.Input.Sensor.Gyro.Y / self.Input.Sensor.Gyro.Sensitivity) & 0xFFFF
-        gyroz = int(self.Input.Sensor.Gyro.Z / self.Input.Sensor.Gyro.Sensitivity) & 0xFFFF
+        gyrox = int(Dot2DPS(self.Input.Sensor.Gyro.X, self.Input.Sensor.Gyro.Sensitivity, 0.03)) & 0xFFFF
+        gyroy = int(Dot2DPS(self.Input.Sensor.Gyro.Y, self.Input.Sensor.Gyro.Sensitivity, 0.03)) & 0xFFFF
+        gyroz = int(Dot2DPS(self.Input.Sensor.Gyro.Z, self.Input.Sensor.Gyro.Sensitivity, 0.03)) & 0xFFFF
 
         sixaxis: bytes = b''.join([s.to_bytes(2, 'little')
                            for s in [accelx, accely, accelz, gyrox, gyroy, gyroz]])
@@ -288,6 +288,11 @@ class Controller:
 
 def bitInput(input, offset: int) -> int:
     return 1 << offset if input else 0
+
+def Dot2DPS(dot: int, dot_per_degree: float, psec: float) -> float:
+    degree: float = dot / dot_per_degree
+    dps:float = degree / psec
+    return dps
 
 def set_controller_input(procon: ControllerInput, code: str, event_value: any):
     onoff_value: int = int(event_value > 0)

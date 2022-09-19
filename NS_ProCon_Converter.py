@@ -70,13 +70,16 @@ if not mouse or not keybd:
     for device in devices:
         print(f'\t{device.path} {device.name} {device.phys}')
     os._exit(1)
+else:
+    print("Mouse: ", mouse.name)
+    print("Keyboard: ", keybd.name)
 
 evkeys: Dict[int, str] = {ev.ecodes[key.upper()]: key.upper()
                           for key in keyconfig}
 turn_dots: float = float(devconfig['MouseDPI']) * \
     (float(devconfig['MouseTurnDistance']) / 2.54)
-dot_per_digit: float = (turn_dots / 180) * 0.07
-ProCon.Input.Sensor.Gyro.Sensitivity = dot_per_digit
+dot_per_degree: float = (turn_dots / 180) * 0.07
+ProCon.Input.Sensor.Gyro.Sensitivity = dot_per_degree
 ProCon.applySens = ['gyroy', 'gyroz']
 ProCon.LogLevel = 2
 
