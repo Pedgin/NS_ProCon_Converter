@@ -56,12 +56,12 @@ keybd = None
 
 for dev in devices:
     devcapa = dev.capabilities()
-    EV_REL = ev.ecodes['EV_REL']
-    EV_KEY = ev.ecodes['EV_KEY']
-    BTN_MOUSE = ev.ecodes['BTN_MOUSE']
-    if (EV_REL in devcapa) and (BTN_MOUSE in devcapa[EV_KEY]):
+    ecREL = ev.ecodes['EV_REL']
+    ecKEY = ev.ecodes['EV_KEY']
+    ecBTNMOUSE = ev.ecodes['BTN_MOUSE']
+    if (ecREL in devcapa) and (ecBTNMOUSE in devcapa[ecKEY]):
         mouse = dev
-    elif (EV_REL not in devcapa) and (EV_KEY in devcapa):
+    elif (ecREL not in devcapa) and (ecKEY in devcapa):
         keybd = dev
 
 if not mouse or not keybd:
@@ -86,9 +86,9 @@ ProCon.LogLevel = 2
 async def mouse_events(mouse: InputDevice):
     async for event in mouse.async_read_loop():
         if event.type == ev.ecodes['EV_REL'] and event.code in [ev.ecodes['REL_X'], ev.ecodes['REL_Y']]:
-            if event.code == 'REL_X':
+            if event.code == ev.ecodes['REL_X']:
                 ProCon.Input.Sensor.Gyro.Z += event.value
-            elif event.code == 'REL_Y':
+            elif event.code == ev.ecodes['REL_Y']:
                 ProCon.Input.Sensor.Gyro.Y += event.value
         elif event.type == ev.ecodes['EV_KEY'] and event.code in evkeys:
             set_controller_input(
